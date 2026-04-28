@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- 居中放置 ic_fab_pause（24vp）放大到 48vp，相对前景 108×108 居中 -->
+    <group
+        android:translateX="30"
+        android:translateY="30"
+        android:scaleX="2"
+        android:scaleY="2">
+        <path
+            android:fillColor="@color/primary"
+            android:pathData="M6,5h4v14H6z M14,5h4v14h-4z" />
+    </group>
+</vector>

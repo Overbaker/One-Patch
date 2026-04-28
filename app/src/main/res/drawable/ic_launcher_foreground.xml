@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- 中心 patch：圆角矩形（白色补丁），象征「贴上一块屏蔽区」 -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M36,36h36a6,6 0,0 1,6 6v24a6,6 0,0 1,-6 6h-36a6,6 0,0 1,-6 -6v-24a6,6 0,0 1,6 -6z" />
+    <!-- 内部点缀：模拟"针脚"短线，强化 patch 语义 -->
+    <path
+        android:strokeColor="#0D47A1"
+        android:strokeWidth="1.6"
+        android:fillColor="@android:color/transparent"
+        android:pathData="M40,42h28 M40,46h28 M40,50h28 M40,54h28 M40,58h28 M40,62h28 M40,66h20" />
+    <!-- 高光：左上方小高光提升立体感 -->
+    <path
+        android:fillColor="#33FFFFFF"
+        android:pathData="M36,42a6,6 0,0 1,6 -6h12v6h-18z" />
+</vector>

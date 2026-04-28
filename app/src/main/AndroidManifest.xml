@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <application
+        android:name=".TouchBlockerApp"
+        android:allowBackup="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="false"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.TouchBlocker"
+        tools:targetApi="34">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:screenOrientation="portrait">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".FullscreenEditorActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.TouchBlocker.Fullscreen" />
+
+        <activity
+            android:name=".RecordGestureActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.TouchBlocker.Fullscreen" />
+
+        <!-- trampoline：可绑定到敲击背部 / 悬浮球 / 桌面快捷方式 → 一键切换屏蔽暂停 -->
+        <activity
+            android:name=".QuickToggleActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:icon="@drawable/ic_fab_pause"
+            android:label="@string/quick_toggle_label"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@style/Theme.TouchBlocker.Transparent" />
+
+        <!-- 标准 LAUNCHER 别名：让 HyperOS 敲击背部 / 悬浮球能枚举到 -->
+        <activity-alias
+            android:name=".QuickToggleAlias"
+            android:targetActivity=".QuickToggleActivity"
+            android:enabled="true"
+            android:exported="true"
+            android:icon="@mipmap/ic_quick_toggle"
+            android:roundIcon="@mipmap/ic_quick_toggle_round"
+            android:label="@string/quick_toggle_alias_label"
+            android:taskAffinity="">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <service
+            android:name=".service.OverlayService"
+            android:description="@string/service_description"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="touch_block_overlay_runtime" />
+        </service>
+
+        <service
+            android:name=".service.BlockerAccessibilityService"
+            android:exported="false"
+            android:label="@string/app_name"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibility_service_config" />
+        </service>
+
+    </application>
+</manifest>

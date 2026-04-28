@@ -1,0 +1,18 @@
+# Build
+/build/
+**/build/
+.gradle/
+.idea/
+*.iml
+local.properties
+captures/
+
+# Signing - 绝不提交
+keystore.properties
+*.jks
+*.keystore
+
+# Output
+/app/release/
+*.apk
+*.aab

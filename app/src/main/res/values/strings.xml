@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">One Patch</string>
+    <string name="app_tagline">屏幕一贴 · 触控防御</string>
+    <string name="service_description">One Patch · 触控防御运行时</string>
+
+    <!-- 主界面 -->
+    <string name="action_enable">启用屏蔽</string>
+    <string name="action_pause">暂停屏蔽</string>
+    <string name="action_reset">恢复默认区域</string>
+    <string name="action_edit_fullscreen">在全屏上编辑屏蔽区域</string>
+    <string name="action_confirm_enable">确认并启用屏蔽</string>
+    <string name="action_cancel">取消</string>
+    <string name="status_editing">在屏幕预览中拖动矩形：中心移动，四角缩放</string>
+    <string name="status_editing_fullscreen">点击下方按钮在真实全屏上拖拽矩形</string>
+    <string name="status_enabled">屏蔽已启用 · 区域内触控将被拦截</string>
+    <string name="status_disabled">已暂停</string>
+    <string name="coordinates_format">X:%1$d  Y:%2$d  W:%3$d  H:%4$d</string>
+    <string name="size_format">%1$d × %2$d</string>
+    <string name="coordinates_content_desc">屏蔽区域当前坐标和尺寸</string>
+    <string name="fullscreen_hint">直接拖拽屏幕：中心移动，四角缩放</string>
+    <string name="fullscreen_coordinates_format">X:%1$d  Y:%2$d  %3$d × %4$d</string>
+    <string name="toast_reset_done">已恢复默认区域</string>
+    <string name="runtime_visible_desc">关闭后屏蔽层完全透明（仍生效，但视觉不可见）</string>
+
+    <!-- 权限引导 -->
+    <string name="perm_overlay_title">需要悬浮窗权限</string>
+    <string name="perm_overlay_desc">为了在屏幕上方拦截触控操作，需要授予「显示在其他应用上层」权限。</string>
+    <string name="perm_overlay_grant">前往授权</string>
+    <string name="perm_overlay_check">检查权限</string>
+    <string name="perm_xiaomi_title">小米/HyperOS 用户请额外开启</string>
+    <string name="perm_xiaomi_step1">「后台弹出界面」权限</string>
+    <string name="perm_xiaomi_step2">「自启动」开关</string>
+    <string name="perm_xiaomi_step3">「省电策略」设为无限制</string>
+    <string name="perm_xiaomi_lock">在最近任务中长按本应用，选择锁定</string>
+    <string name="perm_open_app_settings">打开应用详情</string>
+    <string name="perm_done">我已设置完成</string>
+
+    <!-- 通知 -->
+    <string name="notif_channel_name">屏蔽运行状态</string>
+    <string name="notif_channel_desc">指示屏蔽功能是否正在运行</string>
+    <string name="notif_title">触控屏蔽已启用</string>
+    <string name="notif_text">区域 %1$d × %2$d · 点击返回应用</string>
+    <string name="notif_action_stop">立即停止</string>
+
+    <!-- 提示 -->
+    <string name="toast_starting">即将启用屏蔽…</string>
+    <string name="toast_started">屏蔽已启用</string>
+    <string name="toast_started_with_pos">屏蔽已启用 · 区域 X:%1$d Y:%2$d %3$d×%4$d</string>
+    <string name="toast_started_trusted">屏蔽已启用（物理坐标固定）· X:%1$d Y:%2$d %3$d×%4$d</string>
+    <string name="toast_stopped">屏蔽已暂停</string>
+    <string name="a11y_service_desc">为屏蔽矩形获得「物理坐标固定」能力。\n本服务不读取任何屏幕内容、不监听任何事件，仅用于让屏蔽层在小米单手模式等系统级 transform 下保持物理位置不变。</string>
+    <string name="a11y_service_summary">让屏蔽矩形钉死在物理屏幕坐标</string>
+
+    <!-- 无障碍引导 -->
+    <string name="perm_a11y_title">单手模式适配（推荐开启）</string>
+    <string name="perm_a11y_desc">默认情况下，小米单手模式会把屏蔽层一起下移。开启本应用的无障碍服务后，屏蔽层将稳稳钉在物理屏幕坐标，不受单手模式影响。\n\n此服务不读取屏幕内容、不监听任何事件，仅用于获取系统对窗口的"可信叠加"能力。</string>
+    <string name="perm_a11y_grant">前往无障碍设置开启</string>
+    <string name="perm_a11y_status_on">无障碍服务已开启</string>
+    <string name="perm_a11y_status_off">无障碍服务未开启</string>
+    <string name="channel_status_a11y">运行中 · 通道：ACCESSIBILITY (trusted)</string>
+    <string name="channel_status_app">运行中 · 通道：APPLICATION_OVERLAY</string>
+    <string name="channel_status_idle">未运行</string>
+    <string name="anti_transform_label">单手模式自动让步</string>
+    <string name="anti_transform_desc">检测到屏幕被系统下移（如小米单手模式）时，屏蔽自动暂停让步，让单手模式期间所有触控正常工作；屏幕复位后屏蔽自动恢复。建议保持开启。</string>
+
+    <string name="fab_label">显示悬浮快捷按钮</string>
+    <string name="fab_desc">屏幕边缘悬浮按钮：单击切换屏蔽暂停/恢复；双击触发已录制的单手模式手势；可拖动到任意位置。</string>
+    <string name="fab_content_desc">One Patch 快捷切换</string>
+    <string name="fab_long_press_a11y_required">长按触发单手模式需要先开启无障碍服务</string>
+    <string name="quick_toggle_label">One Patch 快捷切换</string>
+    <string name="quick_toggle_alias_label">One Patch 快捷切换</string>
+    <string name="quick_toggle_hint">将「敲击背部」/「悬浮球」绑定到「One Patch 快捷切换」即可一键暂停/恢复屏蔽</string>
+    <string name="status_paused_manual">已暂停（手动）· 点击 FAB 恢复</string>
+    <string name="status_paused_auto">已暂停（检测到屏幕变换）· 屏幕复位后自动恢复</string>
+    <string name="toast_blocker_not_running">请先在主界面启用屏蔽</string>
+    <string name="toast_overlay_not_attached_yet">屏蔽层尚未就绪，请稍候</string>
+    <string name="hint_fab_appears_when_running">悬浮按钮将在屏蔽启用时显示</string>
+    <string name="fab_cd_pause">暂停屏蔽</string>
+    <string name="fab_cd_resume">恢复屏蔽</string>
+    <string name="fab_a11y_action_trigger_gesture">触发单手模式手势</string>
+
+    <!-- 录制单手模式手势 -->
+    <string name="btn_record_gesture">录制单手模式手势</string>
+    <string name="record_gesture_title">录制单手模式触发手势</string>
+    <string name="record_gesture_instruction">请单指演示单手模式触发手势（可多次抬起重按）</string>
+    <string name="record_gesture_recording">录制中…</string>
+    <string name="record_gesture_recorded">已录制</string>
+    <string name="record_gesture_btn_save">完成</string>
+    <string name="record_gesture_btn_retry">重新开始</string>
+    <string name="record_gesture_btn_cancel">取消</string>
+    <string name="a11y_record_announce">录制模式已启动，请在三秒倒计时后单指演示手势</string>
+    <string name="toast_gesture_too_short">手势过短或无效，请重试</string>
+    <string name="toast_gesture_too_long">手势超过限制（10 段或 60 秒），已丢弃，请重试</string>
+    <string name="toast_multitouch_rejected">检测到多指触控，请用单指演示</string>
+    <string name="toast_keyboard_rejected">请用触屏演示手势</string>
+    <string name="hint_gesture_test">测试</string>
+    <string name="hint_gesture_replaced_undo">手势已更新</string>
+    <string name="status_gesture_recorded">已录制 · 优先使用自定义手势</string>
+    <string name="status_gesture_unrecorded">未录制 · 使用默认手势</string>
+    <string name="dialog_rerecord_title">已有录制手势</string>
+    <string name="dialog_rerecord_message">确定要覆盖现有的单手模式触发手势吗？</string>
+    <string name="dialog_rerecord_confirm">确认重录</string>
+    <string name="runtime_visible_label">运行时显示屏蔽区域提示色</string>
+    <string name="ime_warning_label">屏幕底部红色虚线 = 输入法弹起区，避免在该区域内屏蔽</string>
+    <string name="toast_size_too_small">区域太小（最少 72dp × 72dp）</string>
+    <string name="toast_size_clamped">已限制为最大允许尺寸</string>
+    <string name="toast_overlay_perm_required">请先授予悬浮窗权限</string>
+    <string name="toast_security_exception">系统拒绝创建屏蔽层</string>
+
+    <!-- 限制说明 -->
+    <string name="limitation_title">已知限制</string>
+    <string name="limitation_text">无法屏蔽：状态栏、系统手势区、输入法弹起区域，以及银行/支付等敏感页面（系统会主动隐藏屏蔽层）。这是 Android 平台的安全设计。</string>
+
+    <!-- Menu -->
+    <string name="menu_about">关于</string>
+    <string name="menu_help">使用说明</string>
+</resources>
