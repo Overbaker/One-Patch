@@ -60,7 +60,9 @@
     <string name="perm_a11y_status_off">无障碍服务未开启</string>
     <string name="channel_status_a11y">运行中 · 通道：ACCESSIBILITY (trusted)</string>
     <string name="channel_status_app">运行中 · 通道：APPLICATION_OVERLAY</string>
+    <string name="channel_status_physical_display">运行中 · 通道：PHYSICAL_DISPLAY (display-attached)</string>
     <string name="channel_status_idle">未运行</string>
+    <string name="toast_fallback_to_legacy">已切换至兼容模式</string>
     <string name="anti_transform_label">单手模式自动让步</string>
     <string name="anti_transform_desc">检测到屏幕被系统下移（如小米单手模式）时，屏蔽自动暂停让步，让单手模式期间所有触控正常工作；屏幕复位后屏蔽自动恢复。建议保持开启。</string>
 

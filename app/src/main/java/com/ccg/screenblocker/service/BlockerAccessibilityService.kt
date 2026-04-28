@@ -4,8 +4,12 @@ import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.GestureDescription
 import android.content.Intent
 import android.graphics.Path
+import android.os.Build
 import android.util.Log
+import android.view.Display
+import android.view.SurfaceControl
 import android.view.accessibility.AccessibilityEvent
+import androidx.annotation.RequiresApi
 import com.ccg.screenblocker.data.GestureRepository
 import com.ccg.screenblocker.util.DisplayHelper
 
@@ -65,8 +69,23 @@ class BlockerAccessibilityService : AccessibilityService() {
         return GestureDescription.Builder().addStroke(stroke).build()
     }
 
+    /**
+     * API 34+ 把 SurfaceControl-backed overlay 绑到物理 display。
+     * 失败（异常 / 老系统调用）→ 返回 false 让调用方 fallback 到 WindowManager 路径。
+     */
+    @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    fun attachOverlayToDisplay(sc: SurfaceControl): Boolean = runCatching {
+        attachAccessibilityOverlayToDisplay(Display.DEFAULT_DISPLAY, sc)
+        true
+    }.getOrElse {
+        Log.e(TAG, "attachOverlayToDisplay failed", it)
+        false
+    }
+
     override fun onUnbind(intent: Intent?): Boolean {
         instance = null
+        // 通知 OverlayService a11y 离线 → 当前 backend == DisplayAttachedBackend 时触发 fallback
+        sendBroadcast(Intent(OverlayService.ACTION_A11Y_UNBOUND).setPackage(packageName))
         Log.i(TAG, "accessibility service unbound")
         return super.onUnbind(intent)
     }

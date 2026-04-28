@@ -274,10 +274,12 @@ class MainActivity : AppCompatActivity() {
             binding.tvStatus.setText(statusRes)
             binding.btnToggle.setIconResource(R.drawable.ic_stop)
             // 显示当前真实通道（关键诊断信息）
-            val viaA11y = serviceBinder?.isAttachedViaA11y() == true
-            binding.tvChannelStatus.setText(
-                if (viaA11y) R.string.channel_status_a11y else R.string.channel_status_app
-            )
+            val channelRes = when (serviceBinder?.getActiveBackend()) {
+                "PHYSICAL_DISPLAY" -> R.string.channel_status_physical_display
+                "ACCESSIBILITY" -> R.string.channel_status_a11y
+                else -> R.string.channel_status_app
+            }
+            binding.tvChannelStatus.setText(channelRes)
         } else {
             binding.btnToggle.setText(R.string.action_enable)
             binding.tvStatus.setText(R.string.status_editing_fullscreen)

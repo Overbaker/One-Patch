@@ -43,6 +43,8 @@ class OverlayService : Service() {
         const val ACTION_ENABLE = "com.ccg.screenblocker.action.ENABLE"
         const val ACTION_STOP = "com.ccg.screenblocker.action.STOP"
         const val ACTION_A11Y_AVAILABLE = "com.ccg.screenblocker.action.A11Y_AVAILABLE"
+        /** a11y 服务下线 → 通知 OverlayService 触发 backend fallback */
+        const val ACTION_A11Y_UNBOUND = "com.ccg.screenblocker.action.A11Y_UNBOUND"
 
         /** Quick Toggle 入口（敲击背部）：原子完成「翻转 manualBypass + 触发单手手势」 */
         const val ACTION_TOGGLE_BYPASS_AND_GESTURE =
@@ -76,7 +78,10 @@ class OverlayService : Service() {
     inner class LocalBinder : Binder() {
         fun getService(): OverlayService = this@OverlayService
         fun isRunning(): Boolean = runState != RunState.STOPPED
-        fun isAttachedViaA11y(): Boolean = attachedViaA11y
+        fun isAttachedViaA11y(): Boolean =
+            activeBackend?.id() == OverlayBackend.ID_ACCESSIBILITY ||
+                activeBackend?.id() == OverlayBackend.ID_PHYSICAL_DISPLAY
+        fun getActiveBackend(): String = activeBackend?.id() ?: OverlayBackend.ID_NONE
         fun isManualBypass(): Boolean = manualBypass
         fun isAutoBypass(): Boolean = autoBypass
         fun setStateListener(listener: StateListener?) {
@@ -116,22 +121,39 @@ class OverlayService : Service() {
 
     private val repository by lazy { SharedPrefsBlockAreaRepository(this) }
 
-    /** 监听 AccessibilityService 上线，用于在用户授权后自动重挂 trusted overlay */
+    /** 监听 AccessibilityService 上下线，用于在用户授权后自动重挂 trusted overlay 或 fallback */
     private val a11yReceiver = object : android.content.BroadcastReceiver() {
         override fun onReceive(context: android.content.Context?, intent: Intent?) {
-            if (intent?.action == ACTION_A11Y_AVAILABLE && runState != RunState.STOPPED) {
-                Log.i(TAG, "a11y available, re-attaching as trusted overlay")
-                currentArea?.let { area ->
-                    removeOverlayIfAttached()
-                    runCatching { addOrUpdateOverlay(area) }
-                        .onFailure { Log.e(TAG, "re-attach failed", it) }
+            when (intent?.action) {
+                ACTION_A11Y_AVAILABLE -> {
+                    if (runState != RunState.STOPPED) {
+                        Log.i(TAG, "a11y available, re-attaching as trusted overlay")
+                        currentArea?.let { area ->
+                            removeOverlayIfAttached()
+                            runCatching { addOrUpdateOverlay(area) }
+                                .onFailure { Log.e(TAG, "re-attach failed", it) }
+                        }
+                    }
+                }
+                ACTION_A11Y_UNBOUND -> {
+                    if (runState == RunState.RUNNING &&
+                        activeBackend?.id() == OverlayBackend.ID_PHYSICAL_DISPLAY
+                    ) {
+                        triggerFallbackToWindowManager("a11y_unbound")
+                    }
                 }
             }
         }
     }
 
-    /** 当前 overlay 是否使用 trusted (AccessibilityService) 通道 */
-    private var attachedViaA11y: Boolean = false
+    /** 当前激活的 overlay backend（WindowManager 或 DisplayAttached） */
+    private var activeBackend: OverlayBackend? = null
+
+    /** 当前 service 生命周期内是否已经触发过 fallback（防 ping-pong） */
+    private var fallbackTriggered: Boolean = false
+
+    /** 持续漂移帧计数（hysteresis 阈值 = 2） */
+    private var driftFrameCount: Int = 0
 
     /** 期望的物理屏幕位置（启用屏蔽时记录） */
     private var expectedX: Int = 0
@@ -153,7 +175,10 @@ class OverlayService : Service() {
         super.onCreate()
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
         NotificationHelper.ensureChannel(this)
-        val filter = android.content.IntentFilter(ACTION_A11Y_AVAILABLE)
+        val filter = android.content.IntentFilter().apply {
+            addAction(ACTION_A11Y_AVAILABLE)
+            addAction(ACTION_A11Y_UNBOUND)
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             registerReceiver(a11yReceiver, filter, RECEIVER_NOT_EXPORTED)
         } else {
@@ -230,6 +255,8 @@ class OverlayService : Service() {
         runState = RunState.STOPPED
         manualBypass = false
         autoBypass = false
+        fallbackTriggered = false  // 下次 enable 重新评估 backend
+        driftFrameCount = 0
         notifyStateChanged()
 
         ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
@@ -354,21 +381,26 @@ class OverlayService : Service() {
     }
 
     /**
-     * 单一 sink：将 (manualBypass, autoBypass) → 视图/参数/通知
+     * 单一 sink：将 (manualBypass, autoBypass) → 视图/参数/通知。
+     * - WindowManagerBackend 路径：FLAG_NOT_TOUCHABLE 经 WindowManager.updateViewLayout 切换
+     * - DisplayAttachedBackend 路径：靠 OverlayView.bypassRuntime + onTouchEvent 返回 false 实现透传
      */
     private fun applyBypassState() {
         val v = overlayView ?: return
         val bypass = effectiveBypass
         v.bypassRuntime = bypass
-        runCatching {
-            val params = v.layoutParams as? WindowManager.LayoutParams ?: return@runCatching
-            val baseFlags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
-                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
-            params.flags = if (bypass)
-                baseFlags or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
-            else baseFlags
-            currentWm()?.updateViewLayout(v, params)
+        val backend = activeBackend
+        if (backend is WindowManagerBackend) {
+            runCatching {
+                val params = v.layoutParams as? WindowManager.LayoutParams ?: return@runCatching
+                val baseFlags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                    WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
+                    WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
+                params.flags = if (bypass)
+                    baseFlags or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+                else baseFlags
+                backend.currentWm()?.updateViewLayout(v, params)
+            }
         }
         updateFabIcon()
         currentArea?.let { area ->
@@ -379,13 +411,6 @@ class OverlayService : Service() {
                 )
             }
         }
-    }
-
-    private fun currentWm(): WindowManager? {
-        val a11y = BlockerAccessibilityService.get()
-        return if (attachedViaA11y && a11y != null) {
-            a11y.getSystemService(WINDOW_SERVICE) as WindowManager
-        } else windowManager
     }
 
     private fun startForegroundCompat(area: BlockArea) {
@@ -402,73 +427,128 @@ class OverlayService : Service() {
         }
     }
 
-    private fun addOrUpdateOverlay(area: BlockArea) {
-        // 优先使用 AccessibilityService 的 WindowManager + TYPE_ACCESSIBILITY_OVERLAY
-        // → trusted window，不被 SurfaceFlinger 的 display-area transform（小米单手模式）影响。
-        val a11y = BlockerAccessibilityService.get()
-        val useA11y = a11y != null
-        val wm: WindowManager = if (useA11y) {
-            a11y!!.getSystemService(WINDOW_SERVICE) as WindowManager
-        } else {
-            windowManager ?: return
+    /**
+     * 选择 backend：
+     * - API 34 + a11y service bound + 未 fallback → DisplayAttachedBackend
+     * - 否则 → WindowManagerBackend
+     *
+     * 注意：DisplayAttachedBackend 引用必须位于 SDK gate 内，避免 API < 34 类加载错误。
+     */
+    private fun selectBackend(view: OverlayView): OverlayBackend {
+        val a11yBound = BlockerAccessibilityService.get() != null
+        val wm = windowManager ?: return WindowManagerBackend(this, view, getSystemService(WINDOW_SERVICE) as WindowManager)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE &&
+            a11yBound && !fallbackTriggered
+        ) {
+            return DisplayAttachedBackend(this, view)
         }
-        val params = buildOverlayParams(area, useA11y)
+        return WindowManagerBackend(this, view, wm)
+    }
 
-        try {
-            // 通道切换（普通 ↔ trusted）→ 先彻底移除旧 view
-            if (overlayView != null && attachedViaA11y != useA11y) {
-                Log.i(TAG, "channel switch: trustedOverlay=$useA11y → re-creating view")
-                removeOverlayIfAttached()
+    private fun addOrUpdateOverlay(area: BlockArea) {
+        val isFreshAttach = overlayView == null
+
+        if (!isFreshAttach) {
+            // 已挂载：仅更新位置/尺寸
+            activeBackend?.update(area)
+            Log.i(TAG, "overlay updated to (${area.leftPx},${area.topPx}) ${area.widthPx}x${area.heightPx}")
+            return
+        }
+
+        // Fresh attach 路径
+        val a11y = BlockerAccessibilityService.get()
+        val viewContext: android.content.Context = a11y ?: this
+        val view = OverlayView(viewContext).also {
+            it.mode = OverlayView.Mode.RUNTIME
+            it.runtimeVisible = runtimeVisiblePref()
+        }
+        overlayView = view
+
+        // 选 backend，attach 失败则 fallback 到 WindowManagerBackend
+        val primary = selectBackend(view)
+        val ok = try {
+            primary.attach(area)
+        } catch (e: Exception) {
+            Log.e(TAG, "primary attach threw", e)
+            false
+        }
+
+        activeBackend = if (ok) {
+            primary
+        } else {
+            if (primary !is WindowManagerBackend) {
+                fallbackTriggered = true
+                Log.w(TAG, "primary backend ${primary.id()} failed, falling back to WindowManager")
             }
-
-            val isFreshAttach = overlayView == null
-            if (isFreshAttach) {
-                overlayView = OverlayView(if (useA11y) a11y!! else this).also {
-                    it.mode = OverlayView.Mode.RUNTIME
-                    it.runtimeVisible = runtimeVisiblePref()
-                }
-                wm.addView(overlayView, params)
-                attachedViaA11y = useA11y
-                expectedX = area.leftPx
-                expectedY = area.topPx
-                runState = RunState.RUNNING
-                // 注：保留 manualBypass / autoBypass — re-attach（如 a11y 上线）时不清除用户态，
-                // 仅 handleStop() / onDestroy() 才完全 reset。
-                Log.i(
-                    TAG,
-                    "overlay attached via=${if (useA11y) "ACCESSIBILITY" else "APPLICATION"} " +
-                        "(${params.x},${params.y}) ${params.width}x${params.height}"
-                )
-                if (autoBypassPref()) {
-                    overlayView?.viewTreeObserver?.addOnPreDrawListener(displaceDetector)
-                }
-                overlayView?.startEnableFlash()
-                if (fabPref()) attachFabIfNeeded()
-                // 让新挂载的 view + FAB 立刻反映既有 bypass 状态
-                applyBypassState()
-                notifyStateChanged()
-                val msgRes = if (useA11y)
-                    com.ccg.screenblocker.R.string.toast_started_trusted
-                else
-                    com.ccg.screenblocker.R.string.toast_started_with_pos
+            val wm = getSystemService(WINDOW_SERVICE) as WindowManager
+            val legacy = WindowManagerBackend(this, view, wm)
+            if (!legacy.attach(area)) {
+                Log.e(TAG, "legacy backend also failed; aborting attach")
+                overlayView = null
                 android.widget.Toast.makeText(
                     this,
-                    getString(msgRes, area.leftPx, area.topPx, area.widthPx, area.heightPx),
+                    getString(com.ccg.screenblocker.R.string.toast_security_exception),
                     android.widget.Toast.LENGTH_LONG
                 ).show()
-            } else {
-                wm.updateViewLayout(overlayView, params)
-                Log.i(TAG, "overlay updated (${params.x},${params.y}) ${params.width}x${params.height}")
+                return
             }
-        } catch (e: Exception) {
-            Log.e(TAG, "addView failed (a11y=$useA11y)", e)
+            legacy
+        }
+
+        expectedX = area.leftPx
+        expectedY = area.topPx
+        runState = RunState.RUNNING
+        driftFrameCount = 0
+        Log.i(TAG, "overlay attached via=${activeBackend?.id()} (${area.leftPx},${area.topPx}) ${area.widthPx}x${area.heightPx}")
+
+        if (autoBypassPref() || activeBackend?.id() == OverlayBackend.ID_PHYSICAL_DISPLAY) {
+            // PHYSICAL_DISPLAY 下也开 detector，用于驱动漂移 fallback
+            overlayView?.viewTreeObserver?.addOnPreDrawListener(displaceDetector)
+        }
+        overlayView?.startEnableFlash()
+        if (fabPref()) attachFabIfNeeded()
+        applyBypassState()
+        notifyStateChanged()
+        val msgRes = if (activeBackend?.id() == OverlayBackend.ID_ACCESSIBILITY ||
+            activeBackend?.id() == OverlayBackend.ID_PHYSICAL_DISPLAY
+        ) com.ccg.screenblocker.R.string.toast_started_trusted
+        else com.ccg.screenblocker.R.string.toast_started_with_pos
+        android.widget.Toast.makeText(
+            this,
+            getString(msgRes, area.leftPx, area.topPx, area.widthPx, area.heightPx),
+            android.widget.Toast.LENGTH_LONG
+        ).show()
+    }
+
+    /**
+     * 漂移检测触发：DisplayAttachedBackend 下若 view 仍被 transform 平移 → fallback 老路径。
+     * 防 ping-pong：单 RUNNING 周期内仅触发一次。
+     */
+    private fun triggerFallbackToWindowManager(reason: String) {
+        if (fallbackTriggered) return
+        if (runState != RunState.RUNNING) return
+        fallbackTriggered = true
+        Log.w(TAG, "fallback to WindowManager backend: reason=$reason")
+
+        val area = currentArea ?: return
+        val view = overlayView ?: return
+
+        runCatching { activeBackend?.detach() }
+        val wm = getSystemService(WINDOW_SERVICE) as WindowManager
+        val legacy = WindowManagerBackend(this, view, wm)
+        if (legacy.attach(area)) {
+            activeBackend = legacy
+            applyBypassState()
             android.widget.Toast.makeText(
                 this,
-                getString(com.ccg.screenblocker.R.string.toast_security_exception) + ": " + e.javaClass.simpleName,
-                android.widget.Toast.LENGTH_LONG
+                getString(com.ccg.screenblocker.R.string.toast_fallback_to_legacy),
+                android.widget.Toast.LENGTH_SHORT
             ).show()
-            throw e
+        } else {
+            Log.e(TAG, "fallback legacy attach failed; stopping service")
+            handleStop()
         }
+        driftFrameCount = 0
     }
 
     private fun runtimeVisiblePref(): Boolean =
@@ -699,51 +779,34 @@ class OverlayService : Service() {
         val deltaY = locBuf[1] - expectedY
         val threshold = DisplayHelper.dp(this, 50f)
         val displaced = kotlin.math.abs(deltaY) > threshold
-        if (displaced == autoBypass) return
 
+        // PHYSICAL_DISPLAY 路径：连续 ≥ 2 帧漂移 → 触发 fallback；否则按既有 autoBypass 逻辑
+        if (activeBackend?.id() == OverlayBackend.ID_PHYSICAL_DISPLAY) {
+            if (displaced) {
+                driftFrameCount++
+                if (driftFrameCount >= 2) {
+                    triggerFallbackToWindowManager("displaced")
+                }
+            } else {
+                driftFrameCount = 0
+            }
+            return
+        }
+
+        // 其他 backend：原 autoBypass 行为
+        if (displaced == autoBypass) return
         autoBypass = displaced
         Log.i(TAG, "displacement detected: deltaY=$deltaY → autoBypass=$displaced")
         applyBypassState()
     }
 
-    private fun buildOverlayParams(area: BlockArea, useA11y: Boolean = false): WindowManager.LayoutParams {
-        val type = if (useA11y) {
-            WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY
-        } else {
-            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
-        }
-        return WindowManager.LayoutParams(
-            area.widthPx,
-            area.heightPx,
-            type,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
-                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
-            PixelFormat.TRANSLUCENT
-        ).apply {
-            gravity = Gravity.TOP or Gravity.START
-            x = area.leftPx
-            y = area.topPx
-            title = "TouchBlockOverlay"
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                layoutInDisplayCutoutMode =
-                    WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
-            }
-        }
-    }
-
     private fun removeOverlayIfAttached() {
         val v = overlayView ?: return
         runCatching { v.viewTreeObserver?.removeOnPreDrawListener(displaceDetector) }
-        val wm: WindowManager? = if (attachedViaA11y) {
-            BlockerAccessibilityService.get()?.getSystemService(WINDOW_SERVICE) as? WindowManager
-        } else {
-            windowManager
-        } ?: windowManager
-        runCatching { wm?.removeViewImmediate(v) }
-            .onFailure { Log.w(TAG, "removeView failed (a11y=$attachedViaA11y)", it) }
+        runCatching { activeBackend?.detach() }
+            .onFailure { Log.w(TAG, "backend detach failed", it) }
+        activeBackend = null
         overlayView = null
-        attachedViaA11y = false
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
@@ -763,10 +826,20 @@ class OverlayService : Service() {
         currentArea = rescaled
         repository.save(rescaled)
 
+        // DisplayAttachedBackend 在 config 变化时 detach + attach（重建 surface 大小）；
+        // WindowManagerBackend 仅 update。
         runCatching {
-            currentWm()?.updateViewLayout(overlayView, buildOverlayParams(rescaled, attachedViaA11y))
+            val backend = activeBackend
+            if (backend is DisplayAttachedBackend) {
+                backend.detach()
+                if (!backend.attach(rescaled)) {
+                    triggerFallbackToWindowManager("config_change_reattach_failed")
+                }
+            } else {
+                backend?.update(rescaled)
+            }
         }.onFailure {
-            Log.e(TAG, "updateView on config change failed, fallback to stop", it)
+            Log.e(TAG, "config change relayout failed, stopping", it)
             handleStop()
         }
     }
