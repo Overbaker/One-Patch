@@ -87,8 +87,13 @@ Coordinates are stored as absolute pixels with the recording-time display size, 
 
 - **Cannot block**: status bar, system gesture areas, IME (keyboard), or any app calling `HIDE_OVERLAY_WINDOWS` (banks, payment apps, password fields)
 - **Android 13+**: user can stop the foreground service from Task Manager
-- **Without Accessibility Service**: patch follows OEM display-area transforms (works but moves with content). Auto-bypass kicks in to mitigate
 - **OEM gesture recognition**: Android `dispatchGesture` is best-effort; some ROMs filter accessibility-injected events near the navbar. Re-record if recognition is flaky
+- **HyperOS one-handed mode (UNRESOLVED, see [#1](https://github.com/Overbaker/One-Patch/issues/1))**: Xiaomi HyperOS applies a SurfaceFlinger compositor display-area transform that no public Android API can fully detect or counter. Three approaches were attempted and shipped as best-effort fallbacks (toggleable in settings), but on real HyperOS devices the blocker rectangle still drifts with the one-handed display shift:
+  1. **TYPE_ACCESSIBILITY_OVERLAY** (trusted overlay): drifts because trusted ≠ transform-immune
+  2. **`attachAccessibilityOverlayToDisplay`** (Android 14+, display-attached SurfaceControl): also drifts on HyperOS — Xiaomi forks SurfaceFlinger and applies the transform to display-attached surfaces too
+  3. **Reverse LayoutParams compensation** (closed-loop OnPreDraw + `getLocationOnScreen` reverse update): partial mitigation; ROM-dependent because `getLocationOnScreen` only returns the ViewRootImpl-reported position, which on HyperOS doesn't fully reflect the SurfaceFlinger transform
+
+  **Workaround**: enable single-handed mode bypass (`屏蔽区物理坐标锁定` switch off) — the blocker steps aside during one-handed mode, and resumes when the screen returns to full-height (current default fallback behavior).
 
 ## 🔒 Privacy
 
