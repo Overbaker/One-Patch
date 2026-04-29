@@ -69,6 +69,8 @@ class OverlayService : Service() {
         const val ENABLE_DELAY_MS = 500L
         const val FAB_DEBOUNCE_MS = 300L
         const val FAB_ICON_FADE_MS = 200
+        /** 反向补偿 hysteresis 死区：abs(drift) <= dp(2) 时不补偿（noise floor） */
+        const val DRIFT_HYSTERESIS_DP = 2f
     }
 
     interface StateListener {
@@ -152,8 +154,12 @@ class OverlayService : Service() {
     /** 当前 service 生命周期内是否已经触发过 fallback（防 ping-pong） */
     private var fallbackTriggered: Boolean = false
 
-    /** 持续漂移帧计数（hysteresis 阈值 = 2） */
+    /** 持续漂移帧计数（hysteresis 阈值 = 2，仅 PHYSICAL_DISPLAY → fallback 用） */
     private var driftFrameCount: Int = 0
+
+    /** 反向补偿累积量（仅 WindowManagerBackend + anti_transform=true 路径使用） */
+    private var compensatedDeltaX: Int = 0
+    private var compensatedDeltaY: Int = 0
 
     /** 期望的物理屏幕位置（启用屏蔽时记录） */
     private var expectedX: Int = 0
@@ -257,6 +263,8 @@ class OverlayService : Service() {
         autoBypass = false
         fallbackTriggered = false  // 下次 enable 重新评估 backend
         driftFrameCount = 0
+        compensatedDeltaX = 0
+        compensatedDeltaY = 0
         notifyStateChanged()
 
         ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
@@ -499,6 +507,8 @@ class OverlayService : Service() {
         expectedY = area.topPx
         runState = RunState.RUNNING
         driftFrameCount = 0
+        compensatedDeltaX = 0
+        compensatedDeltaY = 0
         Log.i(TAG, "overlay attached via=${activeBackend?.id()} (${area.leftPx},${area.topPx}) ${area.widthPx}x${area.heightPx}")
 
         if (autoBypassPref() || activeBackend?.id() == OverlayBackend.ID_PHYSICAL_DISPLAY) {
@@ -767,22 +777,28 @@ class OverlayService : Service() {
     }
 
     /**
-     * 位移检测 + 自动让步：
-     * - 手动 bypass 期间禁用（避免双向打架）
-     * - 阈值 dp(50)：低于即视为正常抖动
+     * 位移检测 + transform 抵消 / 让步分发：
+     * - 信号源：OverlayView.getLocationOnScreen() 报告的 ViewRootImpl-reported position（C19/C25）
+     * - 三分支：
+     *   (a) PHYSICAL_DISPLAY backend：连续 ≥ 2 帧漂移 > dp(50) → 触发 fallback
+     *   (b) WindowManagerBackend + anti_transform=true：反向 LayoutParams 补偿（钉物理坐标）
+     *   (c) WindowManagerBackend + anti_transform=false：v1 让步行为（设置 autoBypass）
      */
     private fun detectDisplacementAndBypass() {
+        if (runState != RunState.RUNNING) return
+        if (manualBypass) return
         val v = overlayView as? OverlayView ?: return
         if (!v.isAttachedToWindow) return
-        if (manualBypass) return
         v.getLocationOnScreen(locBuf)
-        val deltaY = locBuf[1] - expectedY
-        val threshold = DisplayHelper.dp(this, 50f)
-        val displaced = kotlin.math.abs(deltaY) > threshold
+        val driftX = locBuf[0] - expectedX
+        val driftY = locBuf[1] - expectedY
 
-        // PHYSICAL_DISPLAY 路径：连续 ≥ 2 帧漂移 → 触发 fallback；否则按既有 autoBypass 逻辑
+        // (a) PHYSICAL_DISPLAY 路径：连续漂移 > dp(50) → fallback
         if (activeBackend?.id() == OverlayBackend.ID_PHYSICAL_DISPLAY) {
-            if (displaced) {
+            val fallbackThresholdPx = DisplayHelper.dp(this, 50f)
+            if (kotlin.math.abs(driftY) > fallbackThresholdPx ||
+                kotlin.math.abs(driftX) > fallbackThresholdPx
+            ) {
                 driftFrameCount++
                 if (driftFrameCount >= 2) {
                     triggerFallbackToWindowManager("displaced")
@@ -793,11 +809,34 @@ class OverlayService : Service() {
             return
         }
 
-        // 其他 backend：原 autoBypass 行为
-        if (displaced == autoBypass) return
-        autoBypass = displaced
-        Log.i(TAG, "displacement detected: deltaY=$deltaY → autoBypass=$displaced")
-        applyBypassState()
+        // (b/c) WindowManagerBackend 路径
+        val backend = activeBackend ?: return
+        if (backend !is WindowManagerBackend) return
+        val area = currentArea ?: return
+
+        if (autoBypassPref()) {
+            // (b) 反向补偿：累积式
+            val hysteresisPx = DisplayHelper.dp(this, DRIFT_HYSTERESIS_DP)
+            if (kotlin.math.abs(driftX) <= hysteresisPx &&
+                kotlin.math.abs(driftY) <= hysteresisPx
+            ) return
+            compensatedDeltaX -= driftX
+            compensatedDeltaY -= driftY
+            val compensatedArea = area.copy(
+                leftPx = area.leftPx + compensatedDeltaX,
+                topPx = area.topPx + compensatedDeltaY
+            )
+            backend.update(compensatedArea)
+            Log.i(TAG, "compensate drift=($driftX,$driftY) delta=($compensatedDeltaX,$compensatedDeltaY)")
+        } else {
+            // (c) v1 让步行为
+            val legacyThresholdPx = DisplayHelper.dp(this, 50f)
+            val displaced = kotlin.math.abs(driftY) > legacyThresholdPx
+            if (displaced == autoBypass) return
+            autoBypass = displaced
+            Log.i(TAG, "displacement detected: deltaY=$driftY → autoBypass=$displaced")
+            applyBypassState()
+        }
     }
 
     private fun removeOverlayIfAttached() {
@@ -825,6 +864,11 @@ class OverlayService : Service() {
             )
         currentArea = rescaled
         repository.save(rescaled)
+        // 重置反向补偿状态：旋转/字号变更后基于新 area 重新测量
+        compensatedDeltaX = 0
+        compensatedDeltaY = 0
+        expectedX = rescaled.leftPx
+        expectedY = rescaled.topPx
 
         // DisplayAttachedBackend 在 config 变化时 detach + attach（重建 surface 大小）；
         // WindowManagerBackend 仅 update。
@@ -853,6 +897,8 @@ class OverlayService : Service() {
         runState = RunState.STOPPED
         manualBypass = false
         autoBypass = false
+        compensatedDeltaX = 0
+        compensatedDeltaY = 0
         notifyStateChanged()
         super.onDestroy()
     }

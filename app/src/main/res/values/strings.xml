@@ -63,8 +63,8 @@
     <string name="channel_status_physical_display">运行中 · 通道：PHYSICAL_DISPLAY (display-attached)</string>
     <string name="channel_status_idle">未运行</string>
     <string name="toast_fallback_to_legacy">已切换至兼容模式</string>
-    <string name="anti_transform_label">单手模式自动让步</string>
-    <string name="anti_transform_desc">检测到屏幕被系统下移（如小米单手模式）时，屏蔽自动暂停让步，让单手模式期间所有触控正常工作；屏幕复位后屏蔽自动恢复。建议保持开启。</string>
+    <string name="anti_transform_label">屏蔽区物理坐标锁定</string>
+    <string name="anti_transform_desc">开启后屏蔽区在小米单手模式下保持物理屏幕原位（反向补偿）；关闭后屏蔽区随单手模式平移并自动让步。建议保持开启。</string>
 
     <string name="fab_label">显示悬浮快捷按钮</string>
     <string name="fab_desc">屏幕边缘悬浮按钮：单击切换屏蔽暂停/恢复；双击触发已录制的单手模式手势；可拖动到任意位置。</string>
