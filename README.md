@@ -1,128 +1,92 @@
-# One Patch
+<p align="center">
+  <img src="assets/hero-banner.svg" alt="One Patch — 1.5 MB offline Android touch-blocking overlay with recordable one-handed gesture replay" width="100%" />
+</p>
 
-> **Slap a patch on your screen.** Block accidental touches in any rectangular area, with one-tap quick switching and recordable one-handed-mode gestures.
+<p align="center">
+  <a href="https://github.com/Overbaker/One-Patch/releases/latest"><img src="https://img.shields.io/github/v/release/Overbaker/One-Patch?color=38BDF8" alt="Latest Release" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT" /></a>
+  <img src="https://img.shields.io/badge/Android-8.0%2B%20(minSdk%2026)-22C55E" alt="Android 8.0+" />
+  <img src="https://img.shields.io/badge/APK-~1.5%20MB-F43F5E" alt="APK ~1.5 MB" />
+  <img src="https://img.shields.io/badge/Internet%20Permission-None-10B981" alt="No Internet Permission" />
+</p>
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![min SDK](https://img.shields.io/badge/minSdk-26-blue)](https://developer.android.com/studio/releases/platforms)
-[![target SDK](https://img.shields.io/badge/targetSdk-34-brightgreen)](https://developer.android.com/about/versions/14)
-[![APK Size](https://img.shields.io/badge/APK-1.5MB-success)](#)
-
-A lightweight Android utility that lets you "patch over" a rectangular zone of your screen — touches inside the patch are silently absorbed; everything outside works normally. Perfect for blocking accidental palm contact, screen-edge mis-touches, sticky ads, or any UI region you wish would just stop reacting.
-
-> **One Patch** (n.) — one rectangle, one tap, one quick gesture. Stick it on, peel it off, drag it anywhere.
+<p align="center">
+  <a href="https://github.com/Overbaker/One-Patch/releases/latest"><strong>Download APK</strong></a> ·
+  <a href="#quick-setup"><strong>Setup</strong></a> ·
+  <a href="#fab--gesture-replay"><strong>Controls</strong></a> ·
+  <a href="PRIVACY.md"><strong>Privacy</strong></a> ·
+  <a href="https://github.com/Overbaker/One-Patch/discussions"><strong>Discussions</strong></a>
+</p>
 
 ---
 
-## ✨ Features
+**One Patch** is a lightweight (**~1.5 MB**), **100% offline** Android utility (Kotlin, no root, zero internet permission) that places a draggable, resizable touch-blocking rectangle over any screen zone — ideal for cracked-screen ghost touches, palm contact, or accidental edge taps — with a one-tap floating toggle and **recordable one-handed-mode gesture replay**.
 
-- **Single rectangular patch**, freely draggable & resizable on real fullscreen
-- **Floating action button** (FAB) — single-tap toggle, double-tap force-bypass + replay one-handed gesture
-- **Record your own one-handed-mode gesture** once on your device, replay any time the FAB asks for it
-- **Quick Toggle alias** — bind to Xiaomi 敲击背部 / 悬浮球 / 桌面快捷方式 for one-tap pause/resume
-- **Visible runtime overlay** (12% blue tint + red border, toggleable) so you always know where the patch is
-- **Survives Xiaomi one-handed mode** when Accessibility Service is enabled (uses `TYPE_ACCESSIBILITY_OVERLAY` trusted window)
-- **Auto-bypass** when the system displaces the overlay (e.g. one-handed mode trigger), restores when display returns
-- **Foreground service** for HyperOS / MIUI battery survival
-- **No internet permission** — fully offline, zero telemetry
-- **Material You** dynamic colors (Android 12+)
-- **TalkBack-friendly** — custom accessibility action for the double-tap behavior
-- **Tiny footprint**: ~1.5 MB release APK
+## How It Works
 
-## 📲 Install
+<p align="center">
+  <img src="assets/how-it-works.svg" alt="How One Patch blocks touches inside a draggable overlay rectangle with floating FAB controls" width="100%" />
+</p>
 
-Download the latest APK from [Releases](https://github.com/TennyDDDD/One-Patch/releases/latest) and `adb install` or open on device.
+## Quick Setup
 
-```bash
-adb install -r app-release.apk
-```
-
-## 🛠 First-time setup
+Download the latest APK from [**Releases**](https://github.com/Overbaker/One-Patch/releases/latest) (or `adb install -r app-release.apk`):
 
 | Step | Action |
 |---|---|
-| 1 | Grant **"Display over other apps"** permission |
-| 2 *(recommended)* | Enable **One Patch Accessibility Service** in *Settings → Accessibility → Installed services* — makes the patch immune to one-handed mode transform |
-| 3 *(Xiaomi only)* | In *App info → Other permissions*, allow **"Show on lock screen"** & **"Display pop-up windows while running in background"**, set **Battery saver → No restrictions** |
-| 4 *(optional)* | Tap **录制单手模式手势** in main settings to record your device's actual one-handed-mode trigger gesture for reliable replay |
+| **1** | Grant **"Display over other apps"** permission |
+| **2** *(recommended)* | Enable **One Patch Accessibility Service** (*Settings → Accessibility → Installed services*) for trusted `TYPE_ACCESSIBILITY_OVERLAY` |
+| **3** *(Xiaomi / HyperOS)* | Allow **"Show on lock screen"** + **"Display pop-up windows while running in background"** and set **Battery saver → No restrictions** |
+| **4** *(optional)* | Tap **录制单手模式手势** to record your device's exact OEM one-handed trigger gesture once |
 
-## 🎯 How it works
-
-```
-┌────────────────────────────────┐
-│  Your favorite app             │  ← receives all touches outside patch
-│                                │
-│   ┌──────────────┐             │
-│   │  One Patch   │ ← 12% blue  │  ← this rectangle silently swallows
-│   │              │   tint +    │     every DOWN/MOVE/UP/CANCEL
-│   │              │   red border│
-│   └──────────────┘             │
-│                                │
-│                          ●     │  ← floating action button
-└────────────────────────────────┘    single-tap = toggle pause
-                                      double-tap = trigger one-handed mode
-```
-
-Under the hood: a `TYPE_APPLICATION_OVERLAY` (or `TYPE_ACCESSIBILITY_OVERLAY` if a11y enabled) View with `onTouchEvent` returning `true`. No system hook, no root, no Xposed.
-
-## 🎮 FAB interactions
+## FAB & Gesture Replay
 
 | Action | Behavior |
 |---|---|
-| Single tap | Toggle the patch's bypass state (pause/resume blocking) |
-| Double tap | Force bypass on + replay your recorded one-handed-mode gesture |
-| Long-press drag | Reposition the FAB anywhere on screen |
-| TalkBack custom action | Equivalent to double-tap (since system intercepts double-tap for focus-click) |
+| **Single tap** | Toggle patch bypass (pause / resume touch blocking) |
+| **Double tap** | Force bypass on + replay your recorded one-handed gesture |
+| **Long-press drag** | Move the FAB anywhere on screen |
+| **Quick Toggle alias** | Bind to Xiaomi 敲击背部 / 悬浮球 / launcher shortcut |
+| **TalkBack action** | Accessible custom action equivalent to double-tap |
 
-## 🤚 One-handed-mode gesture recording
+> **Why recordable gestures?** HyperOS (bottom-edge swipe), OneUI (corner swipe), and ColorOS (three-finger pinch) all trigger one-handed mode differently. Record once (3-2-1 countdown, up to 60 s) — coordinates rescale automatically across display density/resolution changes.
 
-Different OEM ROMs use different gestures to enter one-handed mode (HyperOS bottom-edge swipe, OneUI corner swipe, ColorOS three-finger pinch). Hardcoding any single gesture won't work everywhere. **One Patch lets you record your device's actual gesture once, then replays it on demand**:
+## Key Highlights
 
-1. Main → **录制单手模式手势** (Record one-handed gesture)
-2. 3-2-1 countdown → demonstrate your gesture (single finger; can lift-and-repress for multi-stroke gestures, ≤ 60 s total)
-3. Tap **完成** to save; instantly replayable via FAB double-tap or Quick Toggle alias
+- **Zero Telemetry / Fully Offline**: No `INTERNET` permission declared ([PRIVACY.md](PRIVACY.md)).
+- **Material You & HyperOS Survival**: Dynamic colors (Android 12+), foreground service, auto-bypass when the display shifts.
+- **No Root / No Xposed**: Pure `TYPE_APPLICATION_OVERLAY` / `TYPE_ACCESSIBILITY_OVERLAY`.
 
-Coordinates are stored as absolute pixels with the recording-time display size, then rescaled at replay time, so the gesture survives display resolution / scaling changes.
+<details>
+<summary><strong>Known Android platform boundaries & HyperOS notes</strong></summary>
 
-## ⚠️ Known limitations (Android platform boundaries — not bugs)
+- **Cannot block**: status bar, system gesture bars, IME keyboard, or apps calling `HIDE_OVERLAY_WINDOWS` (banking/payment/password fields).
+- **Android 13+**: users can stop the foreground service from Task Manager.
+- **HyperOS one-handed mode ([#1](https://github.com/Overbaker/One-Patch/issues/1))**: Xiaomi HyperOS applies a SurfaceFlinger display-area transform that shifts even `TYPE_ACCESSIBILITY_OVERLAY` and Android 14 `attachAccessibilityOverlayToDisplay` surfaces. **Workaround (default)**: keep `屏蔽区物理坐标锁定` off so the patch auto-bypasses during one-handed mode and resumes on fullscreen.
 
-- **Cannot block**: status bar, system gesture areas, IME (keyboard), or any app calling `HIDE_OVERLAY_WINDOWS` (banks, payment apps, password fields)
-- **Android 13+**: user can stop the foreground service from Task Manager
-- **OEM gesture recognition**: Android `dispatchGesture` is best-effort; some ROMs filter accessibility-injected events near the navbar. Re-record if recognition is flaky
-- **HyperOS one-handed mode (UNRESOLVED, see [#1](https://github.com/Overbaker/One-Patch/issues/1))**: Xiaomi HyperOS applies a SurfaceFlinger compositor display-area transform that no public Android API can fully detect or counter. Three approaches were attempted and shipped as best-effort fallbacks (toggleable in settings), but on real HyperOS devices the blocker rectangle still drifts with the one-handed display shift:
-  1. **TYPE_ACCESSIBILITY_OVERLAY** (trusted overlay): drifts because trusted ≠ transform-immune
-  2. **`attachAccessibilityOverlayToDisplay`** (Android 14+, display-attached SurfaceControl): also drifts on HyperOS — Xiaomi forks SurfaceFlinger and applies the transform to display-attached surfaces too
-  3. **Reverse LayoutParams compensation** (closed-loop OnPreDraw + `getLocationOnScreen` reverse update): partial mitigation; ROM-dependent because `getLocationOnScreen` only returns the ViewRootImpl-reported position, which on HyperOS doesn't fully reflect the SurfaceFlinger transform
+</details>
 
-  **Workaround**: enable single-handed mode bypass (`屏蔽区物理坐标锁定` switch off) — the blocker steps aside during one-handed mode, and resumes when the screen returns to full-height (current default fallback behavior).
-
-## 🔒 Privacy
-
-One Patch **does not** collect, store, transmit, or sell any personal data. No internet permission is even declared. See [PRIVACY.md](PRIVACY.md).
-
-## 🏗 Build from source
+<details>
+<summary><strong>Build from source (JDK 17 · Android SDK 34)</strong></summary>
 
 ```bash
-git clone https://github.com/TennyDDDD/One-Patch.git
-cd One-Patch
-
-# Generate your own signing key (one-time, BACK IT UP)
+git clone https://github.com/Overbaker/One-Patch.git && cd One-Patch
 ./scripts/gen-keystore.sh
-
-# Configure signing
-cp keystore.properties.template keystore.properties
-# edit keystore.properties with your passwords
-
-# Build
+cp keystore.properties.template keystore.properties   # fill in passwords
 ./gradlew :app:assembleRelease
 # → app/build/outputs/apk/release/app-release.apk
 ```
 
-Requirements: **JDK 17**, **Android SDK 34**, **Build-Tools 34.0.0**.
+</details>
 
-## 📜 License
+<details>
+<summary><strong>FAQ</strong></summary>
 
-[MIT](LICENSE) © 2026 TennyDDDD
+- **Does One Patch work for ghost touches on a cracked screen?** Yes — resize and drag the patch directly over the broken digitizer region to absorb spurious taps while keeping the rest of the screen usable.
+- **Does it require root or internet access?** Neither. It uses standard Android overlay/accessibility APIs and declares zero internet permissions.
+
+</details>
 
 ---
 
-*Built with multi-model collaborative AI workflow (Codex + Gemini + Claude). Spec-driven development via [OpenSpec](https://github.com/Fission-AI/OpenSpec).*
+Licensed under **MIT** ([LICENSE](LICENSE)). See [CONTRIBUTING.md](CONTRIBUTING.md) for contributions and device reports.
