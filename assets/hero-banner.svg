@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="390" viewBox="0 0 1200 390" role="img" aria-label="One Patch: 1.5 MB offline Android touch-blocking overlay with floating toggle and recordable one-handed gesture replay">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0D1219"/>
+      <stop offset="55%" stop-color="#131B26"/>
+      <stop offset="100%" stop-color="#1A1520"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#38BDF8"/>
+      <stop offset="100%" stop-color="#F43F5E"/>
+    </linearGradient>
+    <radialGradient id="g1" cx="18%" cy="22%" r="48%">
+      <stop offset="0%" stop-color="#38BDF8" stop-opacity="0.20"/>
+      <stop offset="100%" stop-color="#38BDF8" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="g2" cx="85%" cy="20%" r="45%">
+      <stop offset="0%" stop-color="#F43F5E" stop-opacity="0.16"/>
+      <stop offset="100%" stop-color="#F43F5E" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1200" height="390" rx="20" fill="url(#bg)"/>
+  <rect width="1200" height="390" rx="20" fill="url(#g1)"/>
+  <rect width="1200" height="390" rx="20" fill="url(#g2)"/>
+  <rect x="1" y="1" width="1198" height="388" rx="19" fill="none" stroke="#263246" stroke-width="1.5"/>
+
+  <!-- Icon Card: Phone with blue-tinted red-bordered patch -->
+  <rect x="48" y="42" width="112" height="112" rx="24" fill="#141E2B" stroke="#2B3B52" stroke-width="1.5"/>
+  <rect x="76" y="58" width="56" height="80" rx="10" fill="#0F172A" stroke="#64748B" stroke-width="2.5"/>
+  <rect x="84" y="76" width="40" height="30" rx="5" fill="#38BDF8" fill-opacity="0.28" stroke="#F43F5E" stroke-width="2.2"/>
+  <line x1="97" y1="85" x2="111" y2="97" stroke="#FDA4AF" stroke-width="2" stroke-linecap="round"/>
+  <line x1="111" y1="85" x2="97" y2="97" stroke="#FDA4AF" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="122" cy="126" r="5" fill="#38BDF8"/>
+
+  <!-- Title & Tagline -->
+  <text x="184" y="86" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="44" font-weight="800" fill="#F8FAFC" letter-spacing="-0.5">One Patch</text>
+  <rect x="424" y="57" width="150" height="30" rx="15" fill="url(#accent)"/>
+  <text x="499" y="77" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="700" fill="#FFFFFF">ANDROID UTILITY</text>
+
+  <text x="184" y="122" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="20" font-weight="500" fill="#CBD5E1">Slap a touch-blocking patch on any screen zone — stop ghost &amp; accidental touches.</text>
+
+  <!-- Pills -->
+  <g font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="600">
+    <rect x="184" y="140" width="96" height="28" rx="14" fill="#182334" stroke="#334155"/>
+    <text x="232" y="159" text-anchor="middle" fill="#E2E8F0">Android 8+</text>
+    <rect x="290" y="140" width="76" height="28" rx="14" fill="#182334" stroke="#334155"/>
+    <text x="328" y="159" text-anchor="middle" fill="#E2E8F0">Kotlin</text>
+    <rect x="376" y="140" width="84" height="28" rx="14" fill="#182334" stroke="#334155"/>
+    <text x="418" y="159" text-anchor="middle" fill="#E2E8F0">No Root</text>
+    <rect x="470" y="140" width="110" height="28" rx="14" fill="#182334" stroke="#334155"/>
+    <text x="525" y="159" text-anchor="middle" fill="#E2E8F0">Material You</text>
+    <rect x="590" y="140" width="118" height="28" rx="14" fill="#182334" stroke="#334155"/>
+    <text x="649" y="159" text-anchor="middle" fill="#E2E8F0">Zero Internet</text>
+  </g>
+
+  <!-- 3 KPI Cards -->
+  <rect x="48" y="210" width="352" height="138" rx="16" fill="#131C2A" stroke="#26354C" stroke-width="1.5"/>
+  <rect x="48" y="210" width="352" height="4" rx="2" fill="#38BDF8"/>
+  <text x="72" y="246" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="700" fill="#94A3B8" letter-spacing="0.8">TINY FOOTPRINT</text>
+  <text x="72" y="298" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="44" font-weight="800" fill="#F8FAFC">1.5 MB</text>
+  <text x="72" y="328" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="13.5" fill="#94A3B8">Pure Kotlin release APK · Zero bloat</text>
+
+  <rect x="424" y="210" width="352" height="138" rx="16" fill="#131C2A" stroke="#26354C" stroke-width="1.5"/>
+  <rect x="424" y="210" width="352" height="4" rx="2" fill="#22C55E"/>
+  <text x="448" y="246" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="700" fill="#94A3B8" letter-spacing="0.8">PRIVACY FIRST</text>
+  <text x="448" y="298" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="42" font-weight="800" fill="#F8FAFC">100% Offline</text>
+  <text x="448" y="328" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="13.5" fill="#94A3B8">No INTERNET permission declared · 0 telemetry</text>
+
+  <rect x="800" y="210" width="352" height="138" rx="16" fill="#131C2A" stroke="#26354C" stroke-width="1.5"/>
+  <rect x="800" y="210" width="352" height="4" rx="2" fill="#F43F5E"/>
+  <text x="824" y="246" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="700" fill="#94A3B8" letter-spacing="0.8">SMART CONTROLS</text>
+  <text x="824" y="296" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="36" font-weight="800" fill="#F8FAFC">Record &amp; Replay</text>
+  <text x="824" y="328" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="13.5" fill="#94A3B8">Custom one-handed gesture replay + 1-tap FAB</text>
+</svg>

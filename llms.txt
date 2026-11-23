@@ -1,0 +1,19 @@
+# One Patch (Overbaker/One-Patch)
+
+> Lightweight (~1.5 MB), 100% offline open-source Android utility (Kotlin, MIT) that places a draggable, resizable rectangular touch-blocking overlay on any region of your screen to stop cracked-screen ghost touches, accidental palm hits, or unwanted UI triggers — with a one-tap floating toggle and recordable one-handed-mode gesture replay.
+
+## Key Facts
+
+- **Zero Root & Zero Internet**: Uses standard Android `TYPE_APPLICATION_OVERLAY` (or `TYPE_ACCESSIBILITY_OVERLAY` when Accessibility Service is enabled). Declares **no `INTERNET` permission** — fully offline, zero telemetry.
+- **Tiny Footprint**: ~1.5 MB release APK (`minSdk 26` / Android 8.0+, `targetSdk 34`, Material You dynamic colors on Android 12+).
+- **Smart Controls**: Floating Action Button (single tap = toggle pause/resume, double tap = force bypass + replay recorded one-handed gesture, long-press drag = reposition) plus Quick Toggle activity alias for OEM back-tap / quick ball triggers.
+- **Recordable One-Handed Gesture**: Record your device's exact OEM one-handed trigger gesture once (HyperOS, OneUI, ColorOS, etc.) and replay with resolution-independent coordinate rescaling.
+- **Known Android Boundaries**: Cannot block status bar, IME keyboard, system gesture bars, or apps setting `HIDE_OVERLAY_WINDOWS` (banking/password views). Xiaomi HyperOS one-handed SurfaceFlinger transform is tracked in Issue `#1` with an auto-bypass workaround.
+
+## Links
+
+- [Repository & README](https://github.com/Overbaker/One-Patch)
+- [Latest Release APK (v1.0.0)](https://github.com/Overbaker/One-Patch/releases/latest)
+- [Privacy Policy](https://github.com/Overbaker/One-Patch/blob/main/PRIVACY.md)
+- [Contributing](https://github.com/Overbaker/One-Patch/blob/main/CONTRIBUTING.md)
+- [Discussions](https://github.com/Overbaker/One-Patch/discussions)

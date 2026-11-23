@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="390" viewBox="0 0 1200 390" role="img" aria-label="How One Patch works: draggable rectangular overlay blocks touches inside while letting outside touches pass through, controlled by a floating action button">
+  <defs>
+    <marker id="arrCyan" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#38BDF8"/>
+    </marker>
+    <marker id="arrRose" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#F43F5E"/>
+    </marker>
+    <marker id="arrGreen" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#22C55E"/>
+    </marker>
+  </defs>
+
+  <rect width="1200" height="390" rx="18" fill="#0F141D" stroke="#263246" stroke-width="1.5"/>
+  <text x="40" y="44" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="20" font-weight="800" fill="#F8FAFC">How One Patch Works</text>
+  <text x="40" y="66" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="13" fill="#94A3B8">Pure Android overlay View (TYPE_APPLICATION_OVERLAY / TYPE_ACCESSIBILITY_OVERLAY) — no root, no Xposed</text>
+
+  <!-- Phone Frame -->
+  <rect x="86" y="92" width="212" height="270" rx="26" fill="#0B0F17" stroke="#475569" stroke-width="3"/>
+  <rect x="166" y="102" width="52" height="6" rx="3" fill="#334155"/>
+
+  <!-- Underlying App Content inside phone -->
+  <rect x="100" y="118" width="184" height="228" rx="14" fill="#162032"/>
+  <rect x="114" y="132" width="108" height="12" rx="4" fill="#334155"/>
+  <rect x="114" y="152" width="156" height="8" rx="4" fill="#24324A"/>
+  <rect x="114" y="294" width="156" height="10" rx="4" fill="#24324A"/>
+  <rect x="114" y="314" width="94" height="10" rx="4" fill="#24324A"/>
+
+  <!-- The Touch-Blocking Patch Zone -->
+  <rect x="110" y="176" width="164" height="92" rx="10" fill="#38BDF8" fill-opacity="0.18" stroke="#F43F5E" stroke-width="2.5"/>
+  <text x="192" y="216" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="15" font-weight="800" fill="#F8FAFC">One Patch</text>
+  <text x="192" y="236" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11.5" fill="#FDA4AF">Swallows all touches</text>
+  <text x="192" y="252" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="10.5" fill="#94A3B8">DOWN / MOVE / UP</text>
+
+  <!-- Floating FAB -->
+  <circle cx="256" cy="316" r="18" fill="#38BDF8" stroke="#0F172A" stroke-width="3"/>
+  <circle cx="256" cy="316" r="6" fill="#0F172A"/>
+
+  <!-- Callout Connectors -->
+  <line x1="286" y1="146" x2="386" y2="128" stroke="#22C55E" stroke-width="2" marker-end="url(#arrGreen)"/>
+  <line x1="276" y1="222" x2="386" y2="222" stroke="#F43F5E" stroke-width="2" marker-end="url(#arrRose)"/>
+  <line x1="276" y1="316" x2="386" y2="316" stroke="#38BDF8" stroke-width="2" marker-end="url(#arrCyan)"/>
+
+  <!-- Right Side Explanation Cards -->
+  <!-- Card 1 -->
+  <rect x="396" y="92" width="764" height="76" rx="12" fill="#151D2B" stroke="#253349"/>
+  <rect x="396" y="92" width="5" height="76" rx="2" fill="#22C55E"/>
+  <text x="420" y="122" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="15" font-weight="800" fill="#F8FAFC">1. Outside the Patch — Zero Interference</text>
+  <text x="420" y="148" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="13.5" fill="#94A3B8">Every app outside the rectangle receives normal taps, scrolls, and multi-touch gestures with zero latency.</text>
+
+  <!-- Card 2 -->
+  <rect x="396" y="184" width="764" height="82" rx="12" fill="#1B1622" stroke="#4C2636"/>
+  <rect x="396" y="184" width="5" height="82" rx="2" fill="#F43F5E"/>
+  <text x="420" y="214" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="15" font-weight="800" fill="#F8FAFC">2. Inside the Patch — Silently Absorbed</text>
+  <text x="420" y="238" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="13.5" fill="#CBD5E1">Blocks cracked-screen ghost touches, palm edges, or unwanted buttons. Freely draggable &amp; resizable on fullscreen.</text>
+  <text x="420" y="256" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12" fill="#FDA4AF">Toggleable 12% blue tint + red border so you always see the active guard area.</text>
+
+  <!-- Card 3 -->
+  <rect x="396" y="282" width="764" height="80" rx="12" fill="#141F2E" stroke="#243E59"/>
+  <rect x="396" y="282" width="5" height="80" rx="2" fill="#38BDF8"/>
+  <text x="420" y="312" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="15" font-weight="800" fill="#F8FAFC">3. Floating Action Button (FAB) &amp; Gesture Replay</text>
+  <text x="420" y="338" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="13.5" fill="#CBD5E1">Single tap = pause/resume · Double tap = bypass + replay your recorded one-handed gesture · Long-press = move</text>
+</svg>
